@@ -16,8 +16,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ApiController extends AbstractController
 {
-    private $applyTime = [36000, 39600, 43200, 46800, 50400, 54000, 57600, 61200, 64800, 72000, 75600];
-    private $format    = 'H:i:s';
+    private $applyTime  = [36000, 39600, 43200, 46800, 50400, 54000, 57600, 61200, 64800, 72000, 75600];
+    private $format     = 'H:i:s';
     private $statusCode = 200;
 
     /**
@@ -38,9 +38,9 @@ class ApiController extends AbstractController
 
     public function __construct(ManagerRegistry $doctrine, EntityManagerInterface $entityManager)
     {
-        $this->em       = $entityManager;
+        $this->em                = $entityManager;
         $this->mastersRepository = $this->em->getRepository(Masters::class);
-        $this->notesRepository = $this->em->getRepository(Notes::class);
+        $this->notesRepository   = $this->em->getRepository(Notes::class);
         if (!$doctrine->getManager()) {
             throw new \Exception("Connection database is lost");
         }
@@ -49,11 +49,11 @@ class ApiController extends AbstractController
     /**
      * @Route("/get-masters", methods={"GET"})
      */
-    public function getMasters() : JsonResponse
+    public function getMasters(): JsonResponse
     {
         try {
             $masters = $this->mastersRepository->findAll();
-            if (!$masters){
+            if (!$masters) {
                 $this->statusCode = Response::HTTP_NOT_FOUND;
                 throw new \Exception('Masters do not exist');
             }
@@ -64,7 +64,7 @@ class ApiController extends AbstractController
                     'Lastname' => $master->getLastname()
                 ];
             }
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $response = [$e->getMessage(), $this->statusCode];
         }
 
@@ -74,7 +74,7 @@ class ApiController extends AbstractController
     /**
      * @Route("/add-reserved", methods={"POST", "GET"})
      */
-    public function addReserved(Request $request) : JsonResponse
+    public function addReserved(Request $request): JsonResponse
     {
         try {
             if ($request->query) {
@@ -85,16 +85,16 @@ class ApiController extends AbstractController
 
                 if ($checkMaster = $this->checkMaster($master)) {
                     if ($time !== NULL && $date !== NULL) {
-                        $timeStart   = (new \DateTime())->setTimestamp('36000')->getTimestamp();
-                        $timeEnd     = (new \DateTime())->setTimestamp('36000')->modify('+11 hours')->getTimestamp();
-                        if (!strripos($time,':')){
+                        $timeStart = (new \DateTime())->setTimestamp('36000')->getTimestamp();
+                        $timeEnd   = (new \DateTime())->setTimestamp('36000')->modify('+11 hours')->getTimestamp();
+                        if (!strripos($time, ':')) {
                             $time = $time . ":00:00";
                         }
                         $timeReserve = (new \DateTime('1970-01-01 ' . $time))->getTimestamp();
 
                         if ($timeStart <= $timeReserve && $timeEnd >= $timeReserve) {
                             if (in_array($timeReserve, $this->applyTime)) {
-                                $note            = $this->notesRepository->findOneBy([
+                                $note = $this->notesRepository->findOneBy([
                                     'master' => $master,
                                     'time'   => \DateTime::createFromFormat($this->format, date($this->format, $timeReserve)),
                                     'date'   => \DateTime::createFromFormat('Y-m-d', $date)
@@ -132,7 +132,7 @@ class ApiController extends AbstractController
                 $this->statusCode = Response::HTTP_BAD_REQUEST;
                 throw new \Exception('Params is empty');
             }
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $response = [$e->getMessage(), $this->statusCode];
         }
 
@@ -150,13 +150,13 @@ class ApiController extends AbstractController
                 $master = $request->query->get('master');
 
                 if ($this->checkMaster($master)) {
-                    if ($date !== NULL && \DateTime::createFromFormat('Y-m-d', $date)){
-                        $notes    = $this->notesRepository->findBy([
+                    if ($date !== NULL && \DateTime::createFromFormat('Y-m-d', $date)) {
+                        $notes = $this->notesRepository->findBy([
                             'master' => $master,
                             'date'   => \DateTime::createFromFormat('Y-m-d', $date)
                         ], ['time' => 'ASC']);
 
-                        if (!$notes){
+                        if (!$notes) {
                             $this->statusCode = Response::HTTP_NOT_FOUND;
                             throw new \Exception('Reserve is closed');
                         }
@@ -164,20 +164,20 @@ class ApiController extends AbstractController
                             $reservedTime[] = $note->getTime()->getTimestamp();
                         }
                         $freeReserve = array_diff($this->applyTime, $reservedTime);
-                        if (!$freeReserve){
+                        if (!$freeReserve) {
                             $this->statusCode = Response::HTTP_NOT_FOUND;
                             throw new \Exception('Reserve is closed');
                         }
                         foreach ($freeReserve as $item) {
                             $response[] = (date('H:i:s', $item));
                         }
-                    } else{
+                    } else {
                         $this->statusCode = Response::HTTP_BAD_REQUEST;
                         throw new \Exception('Date is empty OR invalid format (Y-m-d)');
                     }
                 }
             }
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $response = [$e->getMessage(), $this->statusCode];
         }
 
@@ -190,8 +190,8 @@ class ApiController extends AbstractController
     public function getReserved(): JsonResponse
     {
         try {
-            $notes    = $this->notesRepository->findBy([], ['master' => 'ASC']);
-            if (!$notes){
+            $notes = $this->notesRepository->findBy([], ['master' => 'ASC']);
+            if (!$notes) {
                 $this->statusCode = Response::HTTP_NOT_FOUND;
                 throw new \Exception('Notes is not found');
             }
@@ -204,7 +204,7 @@ class ApiController extends AbstractController
                     'Date'     => $note->getDate(),
                 ];
             }
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $response = [$e->getMessage(), $this->statusCode];
         }
 
@@ -214,7 +214,7 @@ class ApiController extends AbstractController
     public function checkMaster($master): Masters
     {
         if ($master) {
-            $masters    = $this->mastersRepository->findOneBy([
+            $masters = $this->mastersRepository->findOneBy([
                 'id' => $master,
             ]);
             if (!$masters) {
